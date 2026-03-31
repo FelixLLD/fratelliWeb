@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Fratelli Burgers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin:0;
+  font-family:'Poppins',sans-serif;
+  background:#0d0d0d;
+  color:#fff;
+}
+
+/* HEADER */
+header {
+  text-align:center;
+  padding:10px 20px 5px 20px;
+}
+
+header img {
+  width:320px;
+  max-width:90%;
+  display:block;
+  margin:0 auto 5px auto;
+  filter: drop-shadow(0 0 10px #ffcc00);
+}
+
+header p {
+  font-size:1.2em;
+  color:#ffcc00;
+  margin:0;
+}
+
+/* GRID */
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:20px;
+  padding:20px;
+}
+
+/* CARD */
+.card {
+  background:#1a1a1a;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+  transition:.3s;
+}
+
+.card:hover { transform:translateY(-5px); }
+
+.card img {
+  width:100%;
+  height:150px;
+  object-fit:cover;
+}
+
+/* BOTONES */
+button {
+  margin-top:5px;
+  padding:6px 10px;
+  background:#ffcc00;
+  border:none;
+  cursor:pointer;
+  border-radius:5px;
+}
+
+button.accion {
+  margin:3px 3px 0 3px;
+}
+
+/* CARRITO */
+.cart-btn {
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:red;
+  color:#fff;
+  padding:10px 15px;
+  border-radius:20px;
+  cursor:pointer;
+  z-index:1000;
+}
+
+#cart {
+  position:fixed;
+  top:0;
+  right:-350px;
+  width:320px;
+  height:100%;
+  background:#111;
+  padding:20px;
+  transition:.4s;
+  overflow-y:auto;
+  z-index:999;
+}
+
+#cart.active { right:0; }
+
+.cart-item {
+  border-bottom:1px solid #333;
+  margin-bottom:10px;
+}
+
+.controls button {
+  margin:5px;
+}
+
+/* FORM */
+input, textarea, select {
+  width:100%;
+  margin-top:5px;
+  padding:8px;
+  border:none;
+  border-radius:5px;
+}
+
+/* BOTÓN WHATSAPP */
+.whatsapp {
+  display:block;
+  background:#25D366;
+  padding:10px;
+  text-align:center;
+  margin-top:10px;
+  color:white;
+  text-decoration:none;
+  border-radius:5px;
+}
+
+/* BOTONES FLOTANTES */
+#btn-whatsapp, #btn-instagram {
+  position:fixed;
+  right:20px;
+  width:55px;
+  height:55px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  color:white;
+  text-decoration:none;
+  box-shadow:0 5px 15px rgba(0,0,0,0.4);
+  z-index:1001;
+}
+
+#btn-whatsapp {
+  bottom:90px;
+  background:#25D366;
+}
+
+#btn-instagram {
+  bottom:20px;
+  background:#E1306C;
+}
+
+#btn-whatsapp span {
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  background:red;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="cart-btn" onclick="toggleCart()">🛒 <span id="count">0</span></div>
+
+<header>
+  <img src="colocar-logo.png" alt="Fratelli Burgers">
+  <p>No somos mejores, somos distintos.</p>
+</header>
+
+<div class="grid" id="productos"></div>
+
+<div id="cart">
+<h2>Tu pedido</h2>
+<div id="cart-items"></div>
+<h3>Total: $<span id="total">0</span></h3>
+
+<input id="nombre" placeholder="Tu nombre" required>
+<input id="direccion" placeholder="Dirección" required>
+<textarea id="nota" placeholder="Notas..."></textarea>
+
+<!-- NUEVO CAMPO MÉTODO DE PAGO -->
+<select id="metodo-pago">
+  <option value="Efectivo">Efectivo</option>
+  <option value="Transferencia">Transferencia</option>
+</select>
+
+<a id="wa" class="whatsapp" target="_blank" onclick="return validarCampos()">Enviar pedido</a>
+</div>
+
+<a id="btn-whatsapp" target="_blank">💬<span id="whatsapp-count">0</span></a>
+<a id="btn-instagram" target="_blank">📸</a>
+
+<script>
+const telefono = "5491136173606";
+const instagram = "https://www.instagram.com/fratelliburgers?igsh=cGhkZHVwOGJxYXE3";
+
+const productos=[
+{n:"Clásica",p:12500,img:"calsica.jpg",desc:"Dos medallones 110grs, doble tybo, cebolla, tomate, lechuga, huevo, salsa Fratelli"},
+{n:"Doble Cheddar",p:12000,img:"https://source.unsplash.com/300x200/?cheeseburger",desc:"Dos medallones 110grs, doble cheddar, salsa Fratelli"},
+{n:"Benji",p:18500,img:"https://source.unsplash.com/300x200/?bacon-burger",desc:"Cuatro medallones 110grs, cuadruple cheddar, cebolla, tomate, lechuga, salsa Fratelli"},
+{n:"Fratelli Blue",p:15000,img:"https://source.unsplash.com/300x200/?hamburger",desc:"Dos medallones 110grs, queso roquefort, doble tybo, cebolla crispy, salsa Fratelli"},
+{n:"Caramell",p:12000,img:"https://source.unsplash.com/300x200/?gourmet-burger",desc:"Dos medallones 110grs, cebolla caramelizada, doble cheddar, salsa Fratelli"},
+{n:"Doble Cheese Bacon",p:12500,img:"https://source.unsplash.com/300x200/?burger-meal",desc:"Dos medallones 110grs, doble cheddar, bacon, salsa Fratelli"},
+{n:"Pizza Muzzarella",p:10000,img:"https://source.unsplash.com/300x200/?spicy-burger",desc:"300grs de muzzarella, salsa de tomates, oregano, aceitunas"},
+{n:"Especiales",p:4300,img:"https://source.unsplash.com/300x200/?veggie-burger",desc:"Pan, hamburguesa vegetal, lechuga, tomate, queso vegano"},
+{n:"Triple",p:7000,img:"https://source.unsplash.com/300x200/?double-burger",desc:"Pan, triple carne, queso, lechuga, tomate"},
+{n:"Especial",p:5500,img:"https://source.unsplash.com/300x200/?fast-food",desc:"Pan, carne, huevo, bacon, queso, lechuga, tomate"}
+];
+
+let carrito={};
+
+function renderProductos(){
+  const cont=document.getElementById("productos");
+  productos.forEach((p,i)=>{
+    cont.innerHTML+=`
+      <div class="card">
+        <img src="${p.img}">
+        <h3>${p.n}</h3>
+        <p>${p.desc}</p>
+        <p>$${p.p}</p>
+        <button class="accion" onclick="add(${i},1)">Agregar</button>
+        <button class="accion" onclick="add(${i},2)">Doble</button>
+        <button class="accion" onclick="add(${i},3)">Triple</button>
+      </div>`;
+  });
+}
+
+function add(i,cantidad=1){
+  const prod=productos[i];
+  if(!carrito[prod.n]) carrito[prod.n]={...prod,c:0};
+  carrito[prod.n].c+=cantidad;
+  renderCart();
+}
+
+function change(name,delta){
+  if(!carrito[name]) return;
+  carrito[name].c+=delta;
+  if(carrito[name].c<=0) delete carrito[name];
+  renderCart();
+}
+
+function renderCart(){
+  const cont=document.getElementById("cart-items");
+  cont.innerHTML="";
+  let total=0, count=0;
+  for(let k in carrito){
+    let item=carrito[k];
+    total+=item.p*item.c;
+    count+=item.c;
+    cont.innerHTML+=`
+      <div class="cart-item">
+        ${item.n} x${item.c} - $${item.p*item.c}
+        <div class="controls">
+          <button onclick="change('${k}',1)">+</button>
+          <button onclick="change('${k}',-1)">-</button>
+          <button onclick="change('${k}',-999)">❌</button>
+        </div>
+      </div>`;
+  }
+  document.getElementById("total").innerText=total;
+  document.getElementById("count").innerText=count;
+  document.getElementById("whatsapp-count").innerText=count;
+  updateWA();
+}
+
+function updateWA(){
+  let nombre=document.getElementById("nombre").value || "Sin nombre";
+  let dir=document.getElementById("direccion").value || "Sin dirección";
+  let nota=document.getElementById("nota").value || "Sin notas";
+  let pago=document.getElementById("metodo-pago").value || "Efectivo";
+
+  let msg="🍔 Nuevo Pedido\n\n";
+  if(Object.keys(carrito).length === 0){
+    msg += "Sin productos seleccionados\n";
+  } else {
+    for(let k in carrito){
+      let i=carrito[k];
+      msg+=`• ${i.n} x${i.c} = $${i.p*i.c}\n`;
+    }
+  }
+
+  msg+=`\n💰 Total: $${document.getElementById("total").innerText}\n`;
+  msg+=`👤 ${nombre}\n📍 ${dir}\n💳 Método de pago: ${pago}\n📝 ${nota}`;
+
+  let url=`https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`;
+
+  document.getElementById("wa").href=url;
+  document.getElementById("btn-whatsapp").href=url;
+}
+
+// VALIDA QUE NOMBRE Y DIRECCIÓN NO ESTÉN VACÍOS
+function validarCampos(){
+  const nombre=document.getElementById("nombre").value.trim();
+  const direccion=document.getElementById("direccion").value.trim();
+
+  if(nombre === "" || direccion === ""){
+    alert("Por favor completa tu nombre y dirección antes de enviar el pedido.");
+    return false;
+  }
+  return true;
+}
+
+function actualizarBotones(){
+  document.getElementById("btn-instagram").href = instagram;
+}
+
+function toggleCart(){
+  document.getElementById("cart").classList.toggle("active");
+}
+
+document.addEventListener("click", function(e) {
+  const cart = document.getElementById("cart");
+  const btn = document.querySelector(".cart-btn");
+  if(cart.classList.contains("active")){
+    if(!cart.contains(e.target) && !btn.contains(e.target)){
+      cart.classList.remove("active");
+    }
+  }
+});
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape") document.getElementById("cart").classList.remove("active");
+});
+
+document.addEventListener("input",updateWA);
+
+renderProductos();
+actualizarBotones();
+updateWA();
+</script>
+
+</body>
+</html>
